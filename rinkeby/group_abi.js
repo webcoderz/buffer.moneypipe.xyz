@@ -1,5 +1,10 @@
 const group_abi = [
   {
+    "inputs": [],
+    "name": "TransferFailed",
+    "type": "error"
+  },
+  {
     "inputs": [
       {
         "internalType": "bytes32",
