@@ -162,10 +162,12 @@ document.addEventListener("DOMContentLoaded", async () => {
     document.querySelector("main .balance").innerHTML = `Can withdraw: ${paymentEth} ETH`
     document.querySelector("main .withdrawn").innerHTML = `Withdrawn: ${withdrawn/10**18} ETH`
     document.querySelector("#withdraw").addEventListener("click", async (e) => {
+      e.target.classList.add("hidden")
       let amount = me.value
       let proof = tree.proof([me.account, me.value])
       console.log("amount", amount)
       console.log("proof", proof)
+      document.querySelector(".withdrawing").classList.remove("hidden")
       let tx = await contract.methods.withdraw(account, amount, proof).send({
         from: account
       })
@@ -247,7 +249,10 @@ document.addEventListener("DOMContentLoaded", async () => {
   <h2 class='account'></h2>
   <div class='balance'></div>
   <div class='withdrawn'></div>
-  <button id='withdraw' class='btn'>withdraw</button>
+  <button id='withdraw' class='btn'><i class="fa-solid fa-hand-holding-dollar"></i> withdraw</button>
+  <div class='withdrawing hidden'>
+    <i class="fa-solid fa-angle-up fa-flip"></i> withdrawing funds...
+  </div>
 </main>
 <header>
   <h1 id='title'></h1>

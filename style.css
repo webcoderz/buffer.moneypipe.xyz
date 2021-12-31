@@ -25,12 +25,13 @@ main {
 main h2 {
   margin: 0 0 5px;
   color: gold;
+  font-size: 16px;
 }
 main .btn {
   margin: 10px 0 0;
   background: gold;
   color: rgba(0,0,0,0.7);
-  font-size: 16px;
+  font-size: 14px;
 }
 h2, h3 {
   margin: 5px 0;
@@ -388,4 +389,9 @@ td input {
 }
 #estimated {
   border: 1px solid rgba(0,0,0,0.2);
+}
+.withdrawing {
+  padding: 10px;
+  background: rgba(255,255,255,0.1);
+  margin-top: 10px;
 }
