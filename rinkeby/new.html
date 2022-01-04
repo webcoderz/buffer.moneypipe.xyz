@@ -115,9 +115,13 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
     e.target.querySelector("input[type=submit]").classList.add("hidden")
     document.querySelector(".loading").classList.remove("hidden")
-    let { tx, address } = await buffer.create({ title, members })
-    console.log("tx", tx)
-    location.href = "group#address=" + address
+    try {
+      let { tx, address } = await buffer.create({ title, members })
+      console.log("tx", tx)
+      location.href = "group#address=" + address
+    } catch (e) {
+      alert(e.message)
+    }
   })
   document.querySelector(".form").addEventListener("input", () => {
     update()

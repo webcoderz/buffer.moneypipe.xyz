@@ -93,61 +93,64 @@ const draw = (val) => {
 }
 
 document.addEventListener("DOMContentLoaded", async () => {
-  let account = await buffer.current_account()
-  let b = await buffer.get(Params.address)
-  let etherscan = "https://rinkeby.etherscan.io/address/"
-  document.querySelector("#title").textContent = b.title;
-  document.querySelector("#addr").innerHTML = `Group address: <a target="_blank" href="${etherscan}${Params.address}#internaltx">${Params.address}</a><br><br>Send ETH to this group to auto-distribute funds to the members:`
-  document.querySelector("#address").textContent = "ethereum:" + Params.address
-  document.querySelector("#address").href = "ethereum:" + Params.address
-  QRCode.toCanvas(document.querySelector("#qr"), "ethereum:" + Params.address, function (error) {
-    if (error) console.error(error)
-    console.log('success!');
-  })
-  document.querySelector(".reveal").addEventListener("click", (e) => {
-    e.preventDefault()
-    e.stopPropagation()
-    document.querySelector(".alternative").classList.remove("hidden")
-  })
-  members = await buffer.members(Params.address)
-  google.charts.load('current', {'packages':['sankey']});
-  google.charts.setOnLoadCallback(draw);
-  let status = await buffer.status(Params.address)
-  if (status) {
-    document.querySelector("main").classList.remove("hidden")
-    document.querySelector("main .account").innerHTML = "You are a member: " + account
-    document.querySelector("main .total").innerHTML = `Group total recieved: ${status.totalReceivedEth.toString()} ETH`
-    document.querySelector("main .balance").innerHTML = `Can withdraw: ${status.balanceEth.toString()} ETH`
-    document.querySelector("main .withdrawn").innerHTML = `Withdrawn: ${status.withdrawnEth.toString()} ETH`
-    document.querySelector("#withdraw").addEventListener("click", async (e) => {
-      e.target.classList.add("hidden")
-      document.querySelector(".withdrawing").classList.remove("hidden")
-      let { tx } = await buffer.withdraw(Params.address)
-      console.log("tx", tx)
-      location.reload()
+  try {
+    let account = await buffer.current_account()
+    let b = await buffer.get(Params.address)
+    let etherscan = "https://rinkeby.etherscan.io/address/"
+    document.querySelector("#title").textContent = b.title;
+    document.querySelector("#addr").innerHTML = `Group address: <a target="_blank" href="${etherscan}${Params.address}#internaltx">${Params.address}</a><br><br>Send ETH to this group to auto-distribute funds to the members:`
+    document.querySelector("#address").textContent = "ethereum:" + Params.address
+    document.querySelector("#address").href = "ethereum:" + Params.address
+    QRCode.toCanvas(document.querySelector("#qr"), "ethereum:" + Params.address, function (error) {
+      if (error) console.error(error)
+      console.log('success!');
     })
+    document.querySelector(".reveal").addEventListener("click", (e) => {
+      e.preventDefault()
+      e.stopPropagation()
+      document.querySelector(".alternative").classList.remove("hidden")
+    })
+    members = await buffer.members(Params.address)
+    google.charts.load('current', {'packages':['sankey']});
+    google.charts.setOnLoadCallback(draw);
+    let status = await buffer.status(Params.address)
+    if (status) {
+      document.querySelector("main").classList.remove("hidden")
+      document.querySelector("main .account").innerHTML = "You are a member: " + account
+      document.querySelector("main .total").innerHTML = `Group total recieved: ${status.totalReceivedEth.toString()} ETH`
+      document.querySelector("main .balance").innerHTML = `Can withdraw: ${status.balanceEth.toString()} ETH`
+      document.querySelector("main .withdrawn").innerHTML = `Withdrawn: ${status.withdrawnEth.toString()} ETH`
+      document.querySelector("#withdraw").addEventListener("click", async (e) => {
+        e.target.classList.add("hidden")
+        document.querySelector(".withdrawing").classList.remove("hidden")
+        let { tx } = await buffer.withdraw(Params.address)
+        console.log("tx", tx)
+        location.reload()
+      })
+    }
+    document.querySelector("form").addEventListener("submit", async (e) => {
+      e.preventDefault()
+      e.stopPropagation()
+      document.querySelector(".loading").classList.remove("hidden")
+      document.querySelector(".send").classList.add("hidden")
+      document.querySelector(".receivers").classList.remove("hidden")
+      document.querySelector(".receivers").innerHTML = members.map((member, i) => {
+        return `<a target="_blank" href="${etherscan}${member.account}">member ${i+1}: ${member.account}</a>`
+      }).join("")
+      let val = BigInt(Math.pow(10, 18) * parseFloat(e.target.querySelector(".value").value)).toString()
+      let tx = await web3.eth.sendTransaction({
+        from: account,
+        to: Params.address,
+        value: val
+      })
+      document.querySelector(".loading").classList.add("hidden")
+    })
+    document.querySelector(".value").addEventListener("input", (e) => {
+      draw(parseFloat(e.target.value))
+    })
+  } catch (e) {
+    alert(e.message)
   }
-  document.querySelector("form").addEventListener("submit", async (e) => {
-    e.preventDefault()
-    e.stopPropagation()
-    document.querySelector(".loading").classList.remove("hidden")
-    document.querySelector(".send").classList.add("hidden")
-    document.querySelector(".receivers").classList.remove("hidden")
-    document.querySelector(".receivers").innerHTML = members.map((member, i) => {
-      return `<a target="_blank" href="${etherscan}${member.account}">member ${i+1}: ${member.account}</a>`
-    }).join("")
-    let val = BigInt(Math.pow(10, 18) * parseFloat(e.target.querySelector(".value").value)).toString()
-    let tx = await web3.eth.sendTransaction({
-      from: account,
-      to: Params.address,
-      value: val
-    })
-    document.querySelector(".loading").classList.add("hidden")
-  })
-  document.querySelector(".value").addEventListener("input", (e) => {
-    draw(parseFloat(e.target.value))
-  })
-
 })
 </script>
 </head>
