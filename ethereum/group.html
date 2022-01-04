@@ -116,6 +116,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   if (status) {
     document.querySelector("main").classList.remove("hidden")
     document.querySelector("main .account").innerHTML = "You are a member: " + account
+    document.querySelector("main .total").innerHTML = `Group total recieved: ${status.totalReceivedEth.toString()} ETH`
     document.querySelector("main .balance").innerHTML = `Can withdraw: ${status.balanceEth.toString()} ETH`
     document.querySelector("main .withdrawn").innerHTML = `Withdrawn: ${status.withdrawnEth.toString()} ETH`
     document.querySelector("#withdraw").addEventListener("click", async (e) => {
@@ -158,11 +159,12 @@ document.addEventListener("DOMContentLoaded", async () => {
   <div class='subtitle'>create a group to collect money and let members withdraw their share</div>
   <div>
     <a class='btn' href="../../about">How does it work?</a>
-    <a class='btn' href="https://buffer.moneypipe.xyz/rinkeby/group#address=0x5661cD4a742e4033f1A8f672e30e92323a469310">Demo</a>
+    <a class='btn' href="https://buffer.moneypipe.xyz/ethereum/group#address=0xD6A72cc77FbFb2007BE916505A3C88320eD600C3">Demo</a>
   </div>
 </nav>
 <main class='hidden'>
   <h2 class='account'></h2>
+  <div class='total'></div>
   <div class='balance'></div>
   <div class='withdrawn'></div>
   <button id='withdraw' class='btn'><i class="fa-solid fa-hand-holding-dollar"></i> withdraw</button>
