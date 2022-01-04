@@ -16,12 +16,11 @@
 <script src="https://cdn.jsdelivr.net/gh/ethereum/web3.js@3.0.0/dist/web3.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
+<script src="https://unpkg.com/moneypipe/dist/moneypipe.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/randomcolor/0.6.1/randomColor.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/handlebars.js/4.7.7/handlebars.min.js"></script>
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta2/css/all.min.css" rel="stylesheet">
 <link href="/style.css" rel="stylesheet">
-<script src="factory_abi.js"></script>
-<script src="group_abi.js"></script>
 <script src="config.js"></script>
 <script id="template" type="text/x-handlebars-template">
 {{#each accounts}}
@@ -34,27 +33,40 @@
 <script>
 var CONTRACT_ADDRESS = location.hash.slice(1).split("=")[1]
 var web3 = new Web3(window.ethereum);
-var factory = new web3.eth.Contract(factory_abi, Config.address);
 var template = Handlebars.compile(document.querySelector("#template").innerHTML)
-var account
 var chart;
+var members;
+var buffer = new Moneypipe.buffer({
+  web3: web3,
+  network: Config.network,
+  ipfs: async (o) => {
+    let cid = await fetch("https://microipfs.com/add", {
+      method: "post",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ object: o })
+    }).then((r) => {
+      return r.json()
+    }).then((r) => {
+      return r.success
+    })
+    return cid
+  }
+})
 google.charts.load('current', {'packages':['sankey']});
 const update = () => {
   let total = 0
-  parts = []
+  members = []
   document.querySelectorAll(".field").forEach((el) => {
     let account = el.querySelector(".account").textContent
     let value = parseInt(el.querySelector(".value").value)
     if (!value || isNaN(value)) value = 1;
     total += value
-    parts.push({
+    members.push({
       account, value
     })
   })
-  parts.forEach((part) => {
-    console.log("part", part)
-    part.total = total
-//    part.value = Math.floor((part.value / total) * total)
+  members.forEach((member) => {
+    member.total = total
   })
 }
 const draw = () => {
@@ -63,19 +75,17 @@ const draw = () => {
   data.addColumn('string', 'To');
   data.addColumn('number', 'Weight');
   let total = 0;
-  parts.forEach((part) => {
-    total += part.value
+  members.forEach((member) => {
+    total += member.value
   })
-  let rows = parts.map((part) => {
+  let rows = members.map((member) => {
     return [
       "Input",
-      `${part.account} (${Math.floor(part.value/total*10000)/100}%)`,
-      part.value
+      `${member.account} (${Math.floor(member.value/total*10000)/100}%)`,
+      member.value
     ]
   })
-  console.log("rows", rows)
   data.addRows(rows)
-
   let chart = new google.visualization.Sankey(document.getElementById('chart'))
   chart.draw(data, {
     width: "100%",
@@ -94,66 +104,21 @@ const draw = () => {
     }
   })
 }
-var parts = []
 document.addEventListener("DOMContentLoaded", async () => {
-  await ethereum.request({ method: 'eth_requestAccounts' })
-  let _res = await web3.eth.getAccounts()
-  account = _res[0];
   document.querySelector(".ratio-form").addEventListener("submit", async (e) => {
     e.preventDefault()
     e.stopPropagation()
     debugger;
     update()
-    // convert to 1000,0000
-    console.log("parts", parts)
-    let name = document.querySelector(".name").value
-    if (!name || name.length === 0) {
-      alert("Please enter the pipe name")
+    let title = document.querySelector(".title").value
+    if (!title || title.length === 0) {
+      alert("Please enter a title")
       return;
     }
     e.target.querySelector("input[type=submit]").classList.add("hidden")
     document.querySelector(".loading").classList.remove("hidden")
-
-
-    let values = parts.map((part) => {
-      return [
-        part.account,
-        Math.floor((part.value / part.total) * Math.pow(10, 12))
-      ]
-    })
-    console.log("values = ", values)
-
-    // convert to merkle tree
-    const s = {
-      types: ["address", "uint256"],
-      values: values
-    }
-    const script = new Merklescript(s)
-    const root = script.root()
-
-    // store merkle tree on IPFS
-    let cid = await fetch("https://microipfs.com/add", {
-      method: "post",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        object: {
-          merklescript: s
-        }
-      })
-    }).then((r) => {
-      return r.json()
-    }).then((r) => {
-      return r.success
-    })
-    console.log("cid", cid)
-
-    let cidDigest = ipfsh.ctod(cid)
-    console.log("cidDigest = ", cidDigest)
-    let tx = await factory.methods.genesis(name, root, cidDigest).send({
-      from: account 
-    })
+    let { tx, address } = await buffer.create({ title, members })
     console.log("tx", tx)
-    let address = tx.events.ContractDeployed.returnValues.group
     location.href = "group#address=" + address
   })
   document.querySelector(".form").addEventListener("input", () => {
@@ -179,7 +144,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     update()
     draw()
   })
-
 })
 </script>
 </head>
@@ -206,7 +170,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 </form>
 <form class='ratio-form hidden'>
   <div class='name-form'>
-    <input type='text' placeholder="pipe name" class='name'>
+    <input type='text' placeholder="pipe title" class='title'>
   </div>
   <table class='form'></table>
   <input type='submit' class='btn thick' value='OK'>
