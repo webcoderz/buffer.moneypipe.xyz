@@ -14,13 +14,12 @@
 <script src="https://unpkg.com/moneypipe/dist/moneypipe.js"></script>
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta2/css/all.min.css" rel="stylesheet">
 <link href="/style.css" rel="stylesheet">
-<script src="config.js"></script>
 <script>
 var web3 = new Web3(window.ethereum);
 var account
 var buffer = new Moneypipe.buffer({
   web3: web3,
-  network: Config.network
+  network: "rinkeby"
 })
 document.addEventListener("DOMContentLoaded", async () => {
   let groups = await buffer.groups()

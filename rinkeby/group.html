@@ -23,7 +23,6 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/handlebars.js/4.7.7/handlebars.min.js"></script>
 <script src="https://unpkg.com/moneypipe/dist/moneypipe.js"></script>
 <link href="/style.css" rel="stylesheet">
-<script src="config.js"></script>
 <script id="template" type="text/x-handlebars-template">
   <input class='account' type='text' placeholder='address'>
   <input class='value' type='number' placeholder='split portion (1, 10, 100, ...)'>
@@ -38,7 +37,7 @@ var web3 = new Web3(window.ethereum);
 var template = Handlebars.compile(document.querySelector("#template").innerHTML)
 var buffer = new Moneypipe.buffer({
   web3: new Web3(window.ethereum),
-  network: Config.network
+  network: "rinkeby"
 })
 var chart;
 var members = []
@@ -96,7 +95,7 @@ const draw = (val) => {
 document.addEventListener("DOMContentLoaded", async () => {
   let account = await buffer.current_account()
   let b = await buffer.get(Params.address)
-  let etherscan = (Config.network === "rinkeby" ? "https://rinkeby.etherscan.io/address/" : "https://etherscan.io/address/");
+  let etherscan = "https://rinkeby.etherscan.io/address/"
   document.querySelector("#title").textContent = b.title;
   document.querySelector("#addr").innerHTML = `Group address: <a target="_blank" href="${etherscan}${Params.address}#internaltx">${Params.address}</a><br><br>Send ETH to this group to auto-distribute funds to the members:`
   document.querySelector("#address").textContent = "ethereum:" + Params.address
